@@ -1,9 +1,10 @@
 import "./App.css";
+import EVChargingSimulator from "./components/EVChargingSimulator";
 
 function App() {
   return (
     <>
-      <div>Hello World!</div>
+      <EVChargingSimulator />
     </>
   );
 }
