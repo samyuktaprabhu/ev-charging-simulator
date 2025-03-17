@@ -29,6 +29,7 @@ export const AVERAGE_CHARGING_POWER = 11;
 export const YEARS = [2024, 2025];
 
 const Dashboard = () => {
+  // STATES
   const [selectedYear, setSelectedYear] = useState<number>(2024);
   const [selectedMonth, setSelectedMonth] = useState<string>("January");
   const [availableMonths, setAvailableMonths] = useState<string[]>(
@@ -38,6 +39,8 @@ const Dashboard = () => {
   const [lineChartSimulationData, setLineChartSimulationData] = useState<
     { [key: string]: string | number }[]
   >([]);
+
+  // CONTEXT
   const {
     totalNumberOfChargingPoints,
     arrivalMultiplier,
@@ -48,6 +51,7 @@ const Dashboard = () => {
     formData,
   } = useContext(SimulationContext);
 
+  // REACT HOOKS
   useEffect(() => {
     const { totalStations, totalPower } = formData.chargingConfiguration.reduce(
       (acc, curr) => {
@@ -162,27 +166,6 @@ const Dashboard = () => {
     [monthlyConsumptionDataToDisplay, scalingFactor]
   );
 
-  const YearMonthFilter = (): JSX.Element => (
-    <div className="flex flex-row justify-end my-2 gap-2">
-      <ValidatedDropdownInput
-        selectedValue={selectedYear}
-        onChange={(value) => setSelectedYear(Number(value))}
-        options={YEARS.map((year) => ({
-          value: year.toString(),
-          label: year.toString(),
-        }))}
-      />
-      <ValidatedDropdownInput
-        selectedValue={selectedMonth}
-        onChange={(value) => setSelectedMonth(String(value))}
-        options={availableMonths.map((month) => ({
-          value: month,
-          label: month,
-        }))}
-      />
-    </div>
-  );
-
   const cards: CardProps[] = useMemo(
     () => [
       {
@@ -285,6 +268,29 @@ const Dashboard = () => {
     setLineChartSimulationData(data);
   }, [selectedMonth, selectedYear, scalingFactor, setLineChartSimulationData]);
 
+  // FILTER
+  const YearMonthFilter = (): JSX.Element => (
+    <div className="flex flex-row justify-end my-2 gap-2">
+      <ValidatedDropdownInput
+        selectedValue={selectedYear}
+        onChange={(value) => setSelectedYear(Number(value))}
+        options={YEARS.map((year) => ({
+          value: year.toString(),
+          label: year.toString(),
+        }))}
+      />
+      <ValidatedDropdownInput
+        selectedValue={selectedMonth}
+        onChange={(value) => setSelectedMonth(String(value))}
+        options={availableMonths.map((month) => ({
+          value: month,
+          label: month,
+        }))}
+      />
+    </div>
+  );
+
+  // RENDER
   return (
     <div className="flex flex-col items-center justify-start w-full min-h-screen">
       <div className="w-full bg-white sticky top-0 z-10 p-1 shadow-xs">
@@ -303,6 +309,17 @@ const Dashboard = () => {
             type={"danger"}
           />
         )}
+
+        {/* MONTHLY STATS
+        1. Radar Chart – Displays the weekly energy consumption pattern for each
+        month. 
+        2. Total Energy Consumed – Aggregated energy use per month. 
+        3. Annual Forecasted Consumption – Projected energy demand for the entire year.
+        4. Total Charging Events (Maximum Possible) – The theoretical charging
+        sessions based on installed chargers. 
+        5. Total Charging Events (Actual) – The actual number of charging sessions, factoring in an efficiency model
+        (higher expected demand lowers efficiency due to congestion). */}
+
         <div className="bg-white p-4 rounded-md grid grid-cols-1 md:grid-cols-2 border border-gray-50 gap-6">
           <div className="flex flex-col items-center justify-start w-full">
             {monthlyConsumptionDataToDisplay ? (
@@ -325,12 +342,21 @@ const Dashboard = () => {
             ))}
           </div>
         </div>
+
+        {/*  YEARLY & DAILY TRENDS
+        Energy Consumption Heatmap (2024) – Visualizes seasonal charging trends
+        and highlights which days of the week are busiest in different months. */}
         <div className="bg-white w-full p-4 rounded-md border border-gray-50 overflow-x-hidden h-auto min-h-0">
           <CustomHeatMap
             mapHeader="Energy Consumption Heatmap (2024)"
             data={energyConsumptionHeatMapData}
           />
         </div>
+
+        {/* YEARLY & DAILY TRENDS
+        Hourly Energy Distribution per Day – A line graph showing the typical
+        energy consumption pattern for weekdays (Monday, Tuesday, etc.) in a
+        selected month. */}
         <div className="bg-white p-4 w-full rounded-md border border-gray-50 overflow-x-hidden">
           <CustomLineChart
             data={lineChartSimulationData}

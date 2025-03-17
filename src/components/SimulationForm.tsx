@@ -12,6 +12,7 @@ import {
 import RemoveIcon from "../assets/RemoveIcon";
 
 export const SimulationForm = () => {
+  // CONTEXT
   const {
     arrivalMultiplier,
     setArrivalMultiplier,
@@ -22,6 +23,16 @@ export const SimulationForm = () => {
     setFormData,
   } = useContext(SimulationContext);
 
+  // REACT HOOKS
+  useEffect(() => {
+    setFormData({
+      consumption: consumption,
+      arrivalMultiplier: arrivalMultiplier,
+      chargingConfiguration: chargingConfiguration,
+    });
+  }, [chargingConfiguration, arrivalMultiplier, consumption, setFormData]);
+
+  // FUNCTIONS
   const addChargingStation = () => {
     setChargingConfiguration([
       ...chargingConfiguration,
@@ -53,14 +64,7 @@ export const SimulationForm = () => {
     setChargingConfiguration(newConfig);
   };
 
-  useEffect(() => {
-    setFormData({
-      consumption: consumption,
-      arrivalMultiplier: arrivalMultiplier,
-      chargingConfiguration: chargingConfiguration,
-    });
-  }, [chargingConfiguration, arrivalMultiplier, consumption, setFormData]);
-
+  // RENDER
   return (
     <>
       <div className="flex flex-col gap-2">
@@ -68,6 +72,7 @@ export const SimulationForm = () => {
           <div className="px-4 flex flex-col space-y-3">
             {chargingConfiguration.map((config, index) => (
               <>
+                {/* BONUS TASK */}
                 <div className="flex flex-row gap-1">
                   <ValidatedNumberInput
                     value={config.totalNumberOfChargingPoints}

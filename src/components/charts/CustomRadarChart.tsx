@@ -33,7 +33,11 @@ const CustomRadarChart = (props: CustomRadarChartProps) => {
                 <PolarGrid />
                 <PolarAngleAxis dataKey={props.polarAngleAxisKey} />
                 <PolarRadiusAxis />
-                <Tooltip />
+                <Tooltip
+                  formatter={(value) => {
+                    return Number(value).toFixed(2);
+                  }}
+                />
                 <Radar
                   name={props.radarLabel}
                   dataKey={props.radarKey}
