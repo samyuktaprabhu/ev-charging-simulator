@@ -22,11 +22,11 @@ import LighteningIcon from "../../assets/LighteningIcon";
 import PresentationChartIcon from "../../assets/PresentationChartIcon";
 import SunIcon from "../../assets/SunIcon";
 
-const NUMBER_OF_CHARGING_POINTS = 20;
-const AVERAGE_ARRIVAL_MULTIPLIER = 1;
-const AVERAGE_CONSUMPTION = 18;
-const AVERAGE_CHARGING_POWER = 11;
-const YEARS = [2024, 2025];
+export const NUMBER_OF_CHARGING_POINTS = 20;
+export const AVERAGE_ARRIVAL_MULTIPLIER = 1;
+export const AVERAGE_CONSUMPTION = 18;
+export const AVERAGE_CHARGING_POWER = 11;
+export const YEARS = [2024, 2025];
 
 const Dashboard = () => {
   const [selectedYear, setSelectedYear] = useState<number>(2024);
@@ -35,21 +35,39 @@ const Dashboard = () => {
     Object.values(Months)
   );
   const [error, setError] = useState<string>("");
+  const [lineChartSimulationData, setLineChartSimulationData] = useState<
+    { [key: string]: string | number }[]
+  >([]);
   const {
-    numChargePoints,
+    totalNumberOfChargingPoints,
     arrivalMultiplier,
     consumption,
     chargingPower,
-    lineChartSimulationData,
-    setLineChartSimulationData,
+    setChargingPower,
+    setTotalNumberOfChargingPoints,
+    formData,
   } = useContext(SimulationContext);
+
+  useEffect(() => {
+    const { totalStations, totalPower } = formData.chargingConfiguration.reduce(
+      (acc, curr) => {
+        acc.totalStations += curr.totalNumberOfChargingPoints;
+        acc.totalPower += curr.totalNumberOfChargingPoints * curr.chargingPower;
+        return acc;
+      },
+      { totalStations: 0, totalPower: 0 }
+    );
+
+    setTotalNumberOfChargingPoints(totalStations);
+    setChargingPower(totalStations > 0 ? totalPower / totalStations : 0);
+  }, [JSON.stringify(formData.chargingConfiguration)]);
 
   useEffect(() => {
     generateSimulationData();
   }, [
     selectedMonth,
     selectedYear,
-    numChargePoints,
+    totalNumberOfChargingPoints,
     arrivalMultiplier,
     chargingPower,
     consumption,
@@ -78,11 +96,11 @@ const Dashboard = () => {
 
   const scalingFactor: number = useMemo(
     () =>
-      (numChargePoints / NUMBER_OF_CHARGING_POINTS) *
+      (totalNumberOfChargingPoints / NUMBER_OF_CHARGING_POINTS) *
       (arrivalMultiplier / 100 / AVERAGE_ARRIVAL_MULTIPLIER) *
       (consumption / AVERAGE_CONSUMPTION) *
       (chargingPower / AVERAGE_CHARGING_POWER),
-    [numChargePoints, arrivalMultiplier, consumption, chargingPower]
+    [totalNumberOfChargingPoints, arrivalMultiplier, consumption, chargingPower]
   );
 
   const averageChargingDuration: number = useMemo(
@@ -91,8 +109,9 @@ const Dashboard = () => {
   );
 
   const maxChargingSessions: number = useMemo(
-    () => Math.floor((24 / averageChargingDuration) * numChargePoints),
-    [averageChargingDuration, numChargePoints]
+    () =>
+      Math.floor((24 / averageChargingDuration) * totalNumberOfChargingPoints),
+    [averageChargingDuration, totalNumberOfChargingPoints]
   );
 
   const monthsInYear: Record<string, number> = useMemo(
@@ -144,7 +163,7 @@ const Dashboard = () => {
   );
 
   const YearMonthFilter = (): JSX.Element => (
-    <div className="flex flex-col items-center mx-2 px-2 gap-2">
+    <div className="flex flex-row justify-end my-2 gap-2">
       <ValidatedDropdownInput
         selectedValue={selectedYear}
         onChange={(value) => setSelectedYear(Number(value))}
@@ -177,6 +196,7 @@ const Dashboard = () => {
         icon: (
           <LighteningIcon styling="h-10 w-10 text-slate-400 hover:text-slate-500" />
         ),
+        metricValueColor: "text-green-500 hover: text-green-600",
       },
       {
         metricTitle: "Annual Forecasted Consumption",
@@ -187,6 +207,7 @@ const Dashboard = () => {
         icon: (
           <PresentationChartIcon styling="h-10 w-10 text-slate-400 hover:text-slate-500" />
         ),
+        metricValueColor: "text-green-500 hover: text-green-600",
       },
       {
         metricTitle: "Total Charging Events (Ideal)",
@@ -197,6 +218,7 @@ const Dashboard = () => {
         icon: (
           <BulbIcon styling="h-10 w-10 text-slate-400 hover:text-slate-500" />
         ),
+        metricValueColor: "text-green-500 hover: text-green-600",
       },
       {
         metricTitle: "Total Charging Events (Actual)",
@@ -210,6 +232,7 @@ const Dashboard = () => {
         icon: (
           <SunIcon styling="h-10 w-10 text-slate-400 hover:text-slate-500" />
         ),
+        metricValueColor: "text-green-500 hover: text-green-600",
       },
     ],
     [
@@ -264,6 +287,9 @@ const Dashboard = () => {
 
   return (
     <div className="flex flex-col items-center justify-start w-full min-h-screen">
+      <div className="w-full bg-white sticky top-0 z-10 p-1 shadow-xs">
+        <YearMonthFilter />
+      </div>
       <div
         className="w-full max-w-full grid grid-rows-3 gap-6 mt-6"
         style={{ gridTemplateRows: "auto auto" }}
@@ -277,16 +303,15 @@ const Dashboard = () => {
             type={"danger"}
           />
         )}
-        <div className="bg-white p-4 rounded-md grid grid-cols-1 md:grid-cols-2 border border-gray-300 gap-6">
-          <div className="flex flex-col items-center justify-center w-full">
+        <div className="bg-white p-4 rounded-md grid grid-cols-1 md:grid-cols-2 border border-gray-50 gap-6">
+          <div className="flex flex-col items-center justify-start w-full">
             {monthlyConsumptionDataToDisplay ? (
               <CustomRadarChart
                 data={radarChartDisplayData}
                 polarAngleAxisKey="day"
-                radarLabel="Peak Load (kW)"
+                radarLabel="Energy Consumption (kWh)"
                 radarKey="averageDailyConsumption"
                 chartHeader={`Energy Consumption (kWh)`}
-                filter={YearMonthFilter}
               />
             ) : (
               <div className="text-xs flex items-center justify-center text-red-400">
@@ -294,19 +319,19 @@ const Dashboard = () => {
               </div>
             )}
           </div>
-          <div className="grid grid-cols-1 auto-rows-fr gap-6 w-full">
+          <div className="grid grid-cols-1 auto-rows-fr gap-2 w-full">
             {cards.map((card, index) => (
               <Card key={index} {...card} />
             ))}
           </div>
         </div>
-        <div className="bg-white w-full p-4 rounded-md border border-gray-300 overflow-x-hidden h-auto min-h-0">
+        <div className="bg-white w-full p-4 rounded-md border border-gray-50 overflow-x-hidden h-auto min-h-0">
           <CustomHeatMap
             mapHeader="Energy Consumption Heatmap (2024)"
             data={energyConsumptionHeatMapData}
           />
         </div>
-        <div className="bg-white p-4 w-full rounded-md border border-gray-300 overflow-x-hidden">
+        <div className="bg-white p-4 w-full rounded-md border border-gray-50 overflow-x-hidden">
           <CustomLineChart
             data={lineChartSimulationData}
             xAxisKey="hour"

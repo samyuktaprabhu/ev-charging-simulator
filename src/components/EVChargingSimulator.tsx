@@ -7,7 +7,7 @@ import ClockIcon from "../assets/ClockIcon";
 import FireIcon from "../assets/FireIcon";
 
 const EVChargingSimulator = () => {
-  const { numChargePoints, consumption, chargingPower } =
+  const { totalNumberOfChargingPoints, consumption, chargingPower } =
     useContext(SimulationContext);
 
   const averageChargingDuration: number = useMemo(() => {
@@ -17,14 +17,17 @@ const EVChargingSimulator = () => {
   }, [consumption, chargingPower]);
 
   const maxChargingSessions: number = useMemo(() => {
-    return Math.floor((24 / averageChargingDuration) * numChargePoints);
-  }, [averageChargingDuration, numChargePoints]);
+    return Math.floor(
+      (24 / averageChargingDuration) * totalNumberOfChargingPoints
+    );
+  }, [averageChargingDuration, totalNumberOfChargingPoints]);
 
   const cards: CardProps[] = [
     {
       metricTitle: "Average Charging Duration",
       metricValue: averageChargingDuration,
       metricInference: "hours",
+      metricValueColor: "text-green-500 hover: text-green-600",
       icon: (
         <ClockIcon styling="h-10 w-10 text-slate-400 hover:text-slate-500" />
       ),
@@ -33,6 +36,7 @@ const EVChargingSimulator = () => {
       metricTitle: "Maximum Charging Sessions",
       metricValue: maxChargingSessions,
       metricInference: "per day",
+      metricValueColor: "text-green-500 hover: text-green-600",
       icon: (
         <FireIcon styling="h-10 w-10 text-slate-400 hover:text-slate-500" />
       ),
@@ -47,7 +51,7 @@ const EVChargingSimulator = () => {
 
       <div className="flex flex-col md:flex-row flex-1 bg-gray-100 p-6 space-y-4 md:space-y-0 md:space-x-4">
         <div
-          className="w-full md:w-1/5 bg-white p-6 rounded-lg shadow-lg overflow-y-auto"
+          className="w-full md:w-2/7 bg-white p-6 rounded-lg shadow-lg overflow-y-auto"
           style={{ maxHeight: `calc(100vh - 5rem)` }}
         >
           <SimulationForm />
@@ -59,7 +63,7 @@ const EVChargingSimulator = () => {
           </div>
         </div>
         <div
-          className="w-full md:w-4/5 bg-white px-6 pb-6 rounded-lg shadow-lg overflow-auto min-h-0"
+          className="w-full md:w-5/7 bg-white px-6 pb-6 rounded-lg shadow-lg overflow-auto min-h-0"
           style={{ maxHeight: "calc(100vh - 5rem)" }}
         >
           <DashBoard />

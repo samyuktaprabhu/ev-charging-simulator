@@ -1,4 +1,3 @@
-import { JSX } from "react";
 import {
   ResponsiveContainer,
   RadarChart,
@@ -6,6 +5,7 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
+  Tooltip,
 } from "recharts";
 import { DailyConsumption } from "../../types/consumption";
 
@@ -15,23 +15,16 @@ interface CustomRadarChartProps {
   radarLabel: string;
   radarKey: string;
   chartHeader: string;
-  filter?: () => JSX.Element;
 }
 
 const CustomRadarChart = (props: CustomRadarChartProps) => {
   return (
     <>
       <div className="w-full">
-        <div className="w-full flex flex-wrap items-start gap-4">
-          <h1 className="text-md w-full sm:w-auto font-semibold text-gray-500 whitespace-wrap self-start">
+        <div className="w-full flex flex-wrap items-center justify-center gap-2">
+          <h1 className="text-md w-full sm:w-auto font-semibold text-gray-500 whitespace-wrap text-center mb-16">
             {props.chartHeader}
           </h1>
-
-          {props.filter && (
-            <div className="w-full sm:w-auto flex justify-end ml-auto">
-              <div className="sm:w-auto text-ellipsis">{props.filter()}</div>
-            </div>
-          )}
         </div>
         <div className="w-full overflow-auto">
           <div className="min-w-[300px] w-full">
@@ -40,6 +33,7 @@ const CustomRadarChart = (props: CustomRadarChartProps) => {
                 <PolarGrid />
                 <PolarAngleAxis dataKey={props.polarAngleAxisKey} />
                 <PolarRadiusAxis />
+                <Tooltip />
                 <Radar
                   name={props.radarLabel}
                   dataKey={props.radarKey}

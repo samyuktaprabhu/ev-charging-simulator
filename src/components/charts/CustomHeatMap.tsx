@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   Months,
   getMonthsInAYear,
@@ -9,11 +10,60 @@ interface CustomHeatMapProps {
   data: any[];
 }
 
+interface TooltipProps {
+  month: string;
+  day: number;
+  value: number;
+  position: { x: number; y: number };
+}
+
 const CustomHeatMap = (props: CustomHeatMapProps) => {
   const firstDayOfMonth = Object.values(Months).map((_, monthIndex) => {
     const date = new Date(2024, monthIndex, 1);
     return date.getDay();
   });
+
+  const Tooltip = ({ month, day, value, position }: TooltipProps) => {
+    return (
+      <div
+        className="absolute bg-white border border-gray-200 rounded-sm shadow-lg p-3 text-sm"
+        style={{
+          top: `${position.y + 20}px`, // Adjust positioning to avoid overlap
+          left: `${position.x}px`,
+          zIndex: 1000,
+        }}
+      >
+        <div className="font-semibold">{`${month} ${day}`}</div>
+        <div className="text-slate-600">{`${value * 1000} kWh`}</div>
+        <div className="text-slate-500">Energy Consumed</div>
+      </div>
+    );
+  };
+  const [tooltip, setTooltip] = useState<{
+    month: string;
+    day: number;
+    value: number;
+    position: { x: number; y: number };
+  } | null>(null);
+
+  const handleCellHover = (
+    event: React.MouseEvent<HTMLDivElement>,
+    month: string,
+    dayIndex: number,
+    events: number
+  ) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setTooltip({
+      month,
+      day: dayIndex + 1,
+      value: events,
+      position: { x: rect.left, y: rect.top },
+    });
+  };
+
+  const handleCellLeave = () => {
+    setTooltip(null);
+  };
 
   const getColorFromValue = (value: number) => {
     const minHue = 120;
@@ -37,12 +87,18 @@ const CustomHeatMap = (props: CustomHeatMapProps) => {
             const events = props.data[dayOfYear];
             dayOfYear++;
             return (
-              <div
-                key={dayIndex}
-                className="w-4 h-4 rounded-xs"
-                style={{ backgroundColor: getColorFromValue(events) }}
-                title={`${month} ${dayIndex + 1}: ${events * 1000} kWh`}
-              />
+              <>
+                <div
+                  key={dayIndex}
+                  className="w-4 h-4 rounded-xs"
+                  style={{ backgroundColor: getColorFromValue(events) }}
+                  title={`${month} ${dayIndex + 1}: ${events * 1000} kWh`}
+                  onMouseEnter={(e) =>
+                    handleCellHover(e, month, dayIndex, events)
+                  }
+                  onMouseLeave={handleCellLeave}
+                />
+              </>
             );
           } else {
             return <div key={dayIndex} className="w-4 h-4" />;
@@ -114,6 +170,7 @@ const CustomHeatMap = (props: CustomHeatMapProps) => {
           {renderLegend()}
         </div>
       </div>
+      {tooltip && <Tooltip {...tooltip} />}
     </div>
   );
 };
