@@ -13,41 +13,27 @@ import RemoveIcon from "../assets/RemoveIcon";
 
 export const SimulationForm = () => {
   // CONTEXT
-  const {
-    arrivalMultiplier,
-    setArrivalMultiplier,
-    chargingConfiguration,
-    setChargingConfiguration,
-    consumption,
-    setConsumption,
-    setFormData,
-  } = useContext(SimulationContext);
+  const { setFormData, formData } = useContext(SimulationContext);
 
-  // REACT HOOKS
-  useEffect(() => {
-    setFormData({
-      consumption: consumption,
-      arrivalMultiplier: arrivalMultiplier,
-      chargingConfiguration: chargingConfiguration,
-    });
-  }, [chargingConfiguration, arrivalMultiplier, consumption, setFormData]);
-
-  // FUNCTIONS
   const addChargingStation = () => {
-    setChargingConfiguration([
-      ...chargingConfiguration,
-      {
-        totalNumberOfChargingPoints: 20,
-        chargingPower: 11,
-      },
-    ]);
+    const newFormData = {
+      ...formData,
+      chargingConfiguration: [
+        ...formData.chargingConfiguration,
+        { totalNumberOfChargingPoints: 20, chargingPower: 11 },
+      ],
+    };
+    setFormData(newFormData);
   };
 
   const removeChargingStation = (index: number) => {
-    if (chargingConfiguration.length > 1) {
-      const newConfig = [...chargingConfiguration];
+    if (formData.chargingConfiguration.length > 1) {
+      const newConfig = [...formData.chargingConfiguration];
       newConfig.splice(index, 1);
-      setChargingConfiguration(newConfig);
+      setFormData({
+        ...formData,
+        chargingConfiguration: newConfig,
+      });
     }
   };
 
@@ -56,21 +42,23 @@ export const SimulationForm = () => {
     field: keyof ChargingStationConfiguration,
     value: number
   ) => {
-    const newConfig = [...chargingConfiguration];
+    const newConfig = [...formData.chargingConfiguration];
     newConfig[index] = {
       ...newConfig[index],
       [field]: value,
     };
-    setChargingConfiguration(newConfig);
+    setFormData({
+      ...formData,
+      chargingConfiguration: newConfig,
+    });
   };
-
   // RENDER
   return (
     <>
       <div className="flex flex-col gap-2">
         <form className="space-y-1">
           <div className="px-4 flex flex-col space-y-3">
-            {chargingConfiguration.map((config, index) => (
+            {formData.chargingConfiguration.map((config, index) => (
               <>
                 {/* BONUS TASK */}
                 <div className="flex flex-row gap-1">
@@ -104,7 +92,7 @@ export const SimulationForm = () => {
                       type="button"
                       onClick={() => removeChargingStation(index)}
                       className="text-red-400 hover:text-red-500 p-1 rounded-full items-center justify-between"
-                      disabled={chargingConfiguration.length === 1}
+                      disabled={formData.chargingConfiguration.length === 1}
                     >
                       <RemoveIcon />
                     </button>
@@ -116,7 +104,7 @@ export const SimulationForm = () => {
             ))}
           </div>
           <div className="flex justify-end mr-10">
-            {chargingConfiguration.length < 5 ? (
+            {formData.chargingConfiguration.length < 5 ? (
               <button
                 type="button"
                 onClick={addChargingStation}
@@ -135,14 +123,24 @@ export const SimulationForm = () => {
               label="Vehicle Energy Consumption (kWh)"
               min={1}
               max={50}
-              value={consumption}
-              onChange={setConsumption}
+              value={formData.consumption}
+              onChange={(val) =>
+                setFormData({
+                  ...formData,
+                  consumption: val,
+                })
+              }
               defaultValue={AVERAGE_CONSUMPTION}
             />
             <SliderInput
               label={"Arrival Probability Multiplier (%)"}
-              value={arrivalMultiplier}
-              onChange={setArrivalMultiplier}
+              value={formData.arrivalMultiplier}
+              onChange={(val) =>
+                setFormData({
+                  ...formData,
+                  arrivalMultiplier: val,
+                })
+              }
               min={1}
               max={200}
             />
