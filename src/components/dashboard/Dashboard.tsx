@@ -28,7 +28,14 @@ export const AVERAGE_CONSUMPTION = 18;
 export const AVERAGE_CHARGING_POWER = 11;
 export const YEARS = [2024, 2025];
 
-const Dashboard = () => {
+interface DashboardProps {
+  chargingPower: any;
+  totalNumberOfChargingPoints: any;
+}
+const Dashboard = ({
+  chargingPower,
+  totalNumberOfChargingPoints,
+}: DashboardProps) => {
   // STATES
   const [selectedYear, setSelectedYear] = useState<number>(2024);
   const [selectedMonth, setSelectedMonth] = useState<string>("January");
@@ -41,40 +48,16 @@ const Dashboard = () => {
   >([]);
 
   // CONTEXT
-  const {
-    totalNumberOfChargingPoints,
-    arrivalMultiplier,
-    consumption,
-    chargingPower,
-    setChargingPower,
-    setTotalNumberOfChargingPoints,
-    formData,
-  } = useContext(SimulationContext);
-
-  // REACT HOOKS
-  useEffect(() => {
-    const { totalStations, totalPower } = formData.chargingConfiguration.reduce(
-      (acc, curr) => {
-        acc.totalStations += curr.totalNumberOfChargingPoints;
-        acc.totalPower += curr.totalNumberOfChargingPoints * curr.chargingPower;
-        return acc;
-      },
-      { totalStations: 0, totalPower: 0 }
-    );
-
-    setTotalNumberOfChargingPoints(totalStations);
-    setChargingPower(totalStations > 0 ? totalPower / totalStations : 0);
-  }, [JSON.stringify(formData.chargingConfiguration)]);
+  const { formData } = useContext(SimulationContext);
 
   useEffect(() => {
     generateSimulationData();
   }, [
     selectedMonth,
     selectedYear,
-    totalNumberOfChargingPoints,
-    arrivalMultiplier,
+    formData.arrivalMultiplier,
     chargingPower,
-    consumption,
+    formData.consumption,
   ]);
 
   useEffect(() => {
@@ -101,15 +84,20 @@ const Dashboard = () => {
   const scalingFactor: number = useMemo(
     () =>
       (totalNumberOfChargingPoints / NUMBER_OF_CHARGING_POINTS) *
-      (arrivalMultiplier / 100 / AVERAGE_ARRIVAL_MULTIPLIER) *
-      (consumption / AVERAGE_CONSUMPTION) *
+      (formData.arrivalMultiplier / 100 / AVERAGE_ARRIVAL_MULTIPLIER) *
+      (formData.consumption / AVERAGE_CONSUMPTION) *
       (chargingPower / AVERAGE_CHARGING_POWER),
-    [totalNumberOfChargingPoints, arrivalMultiplier, consumption, chargingPower]
+    [
+      totalNumberOfChargingPoints,
+      formData.consumption,
+      formData.arrivalMultiplier,
+      chargingPower,
+    ]
   );
 
   const averageChargingDuration: number = useMemo(
-    () => Number((consumption / chargingPower).toFixed(2)),
-    [consumption, chargingPower]
+    () => Number((formData.consumption / chargingPower).toFixed(2)),
+    [formData.consumption, chargingPower]
   );
 
   const maxChargingSessions: number = useMemo(
@@ -209,7 +197,10 @@ const Dashboard = () => {
           monthsInYear[selectedMonth] *
             maxChargingSessions *
             (0.3 +
-              0.8 * (arrivalMultiplier / 100 / (1 + arrivalMultiplier / 100)))
+              0.8 *
+                (formData.arrivalMultiplier /
+                  100 /
+                  (1 + formData.arrivalMultiplier / 100)))
         ),
         metricInference: "",
         icon: (
@@ -226,7 +217,7 @@ const Dashboard = () => {
       selectedYear,
       monthsInYear,
       maxChargingSessions,
-      arrivalMultiplier,
+      formData.arrivalMultiplier,
     ]
   );
 
