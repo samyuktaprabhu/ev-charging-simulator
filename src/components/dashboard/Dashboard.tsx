@@ -29,8 +29,8 @@ export const AVERAGE_CHARGING_POWER = 11;
 export const YEARS = [2024, 2025];
 
 interface DashboardProps {
-  chargingPower: any;
-  totalNumberOfChargingPoints: any;
+  chargingPower: number;
+  totalNumberOfChargingPoints: number;
 }
 const Dashboard = ({
   chargingPower,
