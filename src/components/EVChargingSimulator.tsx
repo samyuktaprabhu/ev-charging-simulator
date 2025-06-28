@@ -1,4 +1,4 @@
-import { useContext, useMemo } from "react";
+import { useContext, useEffect, useMemo } from "react";
 import Card, { CardProps } from "./common/Card";
 import DashBoard from "./dashboard/Dashboard";
 import { SimulationForm } from "./SimulationForm";
@@ -8,21 +8,46 @@ import FireIcon from "../assets/FireIcon";
 
 const EVChargingSimulator = () => {
   // CONTEXT
-  const { totalNumberOfChargingPoints, consumption, chargingPower } =
-    useContext(SimulationContext);
+
+  const { formData } = useContext(SimulationContext);
 
   // REACT HOOKS
+  const { averageChargingPower, totalNumberOfChargingPoints } = useMemo(() => {
+    const result = formData.chargingConfiguration.reduce(
+      (acc, curr) => {
+        acc.totalNumberOfChargingPoints += curr.totalNumberOfChargingPoints;
+        acc.totalPower += curr.totalNumberOfChargingPoints * curr.chargingPower;
+        return acc;
+      },
+      { totalNumberOfChargingPoints: 0, totalPower: 0 }
+    );
+
+    const averageChargingPower =
+      result.totalNumberOfChargingPoints > 0
+        ? result.totalPower / result.totalNumberOfChargingPoints
+        : 0;
+
+    return {
+      averageChargingPower,
+      totalNumberOfChargingPoints: result.totalNumberOfChargingPoints,
+    };
+  }, [JSON.stringify(formData)]);
+
   const averageChargingDuration: number = useMemo(() => {
-    return chargingPower > 0
-      ? Number((consumption / chargingPower).toFixed(2))
+    return averageChargingPower > 0
+      ? Number((formData.consumption / averageChargingPower).toFixed(2))
       : 0;
-  }, [consumption, chargingPower]);
+  }, [formData.consumption, averageChargingPower]);
 
   const maxChargingSessions: number = useMemo(() => {
     return Math.floor(
       (24 / averageChargingDuration) * totalNumberOfChargingPoints
     );
-  }, [averageChargingDuration, totalNumberOfChargingPoints]);
+  }, [
+    averageChargingDuration,
+    totalNumberOfChargingPoints,
+    formData.chargingConfiguration,
+  ]);
 
   const cards: CardProps[] = [
     {
@@ -78,7 +103,10 @@ const EVChargingSimulator = () => {
           className="w-full md:w-5/7 bg-white px-6 pb-6 rounded-lg shadow-lg overflow-auto min-h-0"
           style={{ maxHeight: "calc(100vh - 5rem)" }}
         >
-          <DashBoard />
+          <DashBoard
+            chargingPower={averageChargingPower}
+            totalNumberOfChargingPoints={totalNumberOfChargingPoints}
+          />
         </div>
       </div>
     </div>

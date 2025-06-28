@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useEffect } from "react";
+import { z } from "zod";
 
 interface NumberInputProps {
   label?: string;
@@ -33,44 +34,35 @@ export const ValidatedNumberInput: React.FC<NumberInputProps> = ({
     setIsFocused(true);
   }, []);
 
+  const numberSchema = useCallback(() => {
+    return z
+      .string()
+      .refine((val) => val === "" || !isNaN(Number(val)), {
+        message: "Input must be a valid number",
+      })
+      .transform((val) => (val === "" ? defaultValue : Number(val)))
+      .refine(
+        (val) =>
+          (min === undefined || val >= min) &&
+          (max === undefined || val <= max),
+        {
+          message: `Number must be between ${min ?? "-∞"} and ${max ?? "∞"}`,
+        }
+      );
+  }, [min, max, defaultValue]);
+
   const handleBlur = useCallback(
     (e: React.FocusEvent<HTMLInputElement>) => {
       setIsFocused(false);
       const val = e.target.value.trim();
-
-      if (val === "") {
-        setInputValue(defaultValue.toString());
-        setError("");
-        onChange(defaultValue);
-        if (onBlur) onBlur(defaultValue);
-        return;
-      }
-
-      const numericMatch = val.match(/^-?\d+(\.\d+)?/);
-      if (!numericMatch) {
-        setInputValue(defaultValue.toString());
-        setError("");
-        onChange(defaultValue);
-        if (onBlur) onBlur(defaultValue);
-        return;
-      }
-
-      const numericValue = numericMatch[0];
-      const numValue = Number(numericValue);
-
-      let finalValue = numValue;
-      if (min !== undefined && numValue < min) {
-        finalValue = min;
-      } else if (max !== undefined && numValue > max) {
-        finalValue = max;
-      }
-
+      const result = numberSchema().safeParse(val);
+      const finalValue = result.success ? result.data : defaultValue;
       setError("");
       setInputValue(finalValue.toString());
       onChange(finalValue);
       if (onBlur) onBlur(finalValue);
     },
-    [onChange, onBlur, min, max, defaultValue]
+    [onChange, onBlur, defaultValue, numberSchema]
   );
 
   const handleChange = useCallback(
@@ -78,32 +70,15 @@ export const ValidatedNumberInput: React.FC<NumberInputProps> = ({
       const val = e.target.value;
       setInputValue(val);
 
-      if (val === "") {
+      const result = numberSchema().safeParse(val);
+      if (result.success) {
         setError("");
-        return;
-      }
-
-      const numValue = Number(val);
-      if (isNaN(numValue)) {
-        setError("Invalid number");
-        return;
-      }
-
-      if (min !== undefined && numValue < min) {
-        setError(`Value must be at least ${min}`);
-      } else if (max !== undefined && numValue > max) {
-        setError(`Value must be at most ${max}`);
+        onChange(result.data);
       } else {
-        setError("");
-        const constrainedValue = Math.max(
-          min ?? -Infinity,
-          Math.min(max ?? Infinity, numValue)
-        );
-
-        onChange(constrainedValue);
+        setError(result.error.errors[0]?.message || "Invalid number");
       }
     },
-    [onChange, min, max]
+    [onChange, numberSchema]
   );
 
   return (
